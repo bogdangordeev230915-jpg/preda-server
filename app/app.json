@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "PrēDa",
+    "slug": "preda",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "com.preda.messenger"
+    },
+    "ios": {
+      "bundleIdentifier": "com.preda.messenger"
+    }
+  }
+}
