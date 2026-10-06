@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>PrēDa</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --brown: #6f432d;
+      --brown-dark: #4a291b;
+      --brown-light: #9b6849;
+      --cream: #f8f2ec;
+      --white: #ffffff;
+      --text: #241812;
+      --muted: #8b7b70;
+      --line: #eadfd6;
+      --green: #5d8a62;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--cream);
+      color: var(--text);
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* AUTH */
+
+    .auth {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background:
+        radial-gradient(circle at top right, #c79b7d 0%, transparent 35%),
+        linear-gradient(135deg, #4a291b, #8a573b);
+    }
+
+    .auth-card {
+      width: min(420px, 100%);
+      background: rgba(255,255,255,.97);
+      border-radius: 28px;
+      padding: 30px 24px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.25);
+    }
+
+    .logo {
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 16px;
+      border-radius: 22px;
+      background: var(--brown);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .auth-title {
+      text-align: center;
+      font-size: 30px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .auth-subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 25px;
+    }
+
+    .field {
+      margin-bottom: 13px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 14px;
+      padding: 13px 14px;
+      outline: none;
+    }
+
+    .field textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .field input:focus,
+    .field textarea:focus {
+      border-color: var(--brown);
+      box-shadow: 0 0 0 3px rgba(111,67,45,.1);
+    }
+
+    .primary {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px;
+      background: var(--brown);
+      color: white;
+      font-weight: 800;
+      margin-top: 5px;
+    }
+
+    .primary:active {
+      transform: scale(.98);
+    }
+
+    .auth-switch {
+      text-align: center;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .auth-switch span {
+      color: var(--brown);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .error {
+      color: #a32121;
+      background: #fff0f0;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* MAIN */
+
+    .app-shell {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      background: var(--white);
+    }
+
+    .sidebar {
+      width: 380px;
+      max-width: 38%;
+      height: 100%;
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    .sidebar-header {
+      background: var(--brown);
+      color: white;
+      padding: 18px 16px 14px;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      font-size: 25px;
+      font-weight: 900;
+      letter-spacing: -.5px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,.13);
+      color: white;
+      font-size: 20px;
+    }
+
+    .search {
+      margin-top: 14px;
+      background: rgba(255,255,255,.15);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+    }
+
+    .search span {
+      font-size: 19px;
+    }
+
+    .search input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: white;
+      padding: 12px 10px;
+    }
+
+    .search input::placeholder {
+      color: rgba(255,255,255,.75);
+    }
+
+    .tabs {
+      display: flex;
+      padding: 9px;
+      gap: 6px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 10px 4px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .tab.active {
+      background: #f1e8e1;
+      color: var(--brown);
+    }
+
+    .list {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 15px;
+      border-bottom: 1px solid #f2eae4;
+      cursor: pointer;
+    }
+
+    .item:hover {
+      background: #faf6f2;
+    }
+
+    .avatar {
+      flex-shrink: 0;
+      width: 51px;
+      height: 51px;
+      border-radius: 50%;
+      background: var(--brown);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .item-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .item-preview {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    /* CHAT */
+
+    .chat {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(111,67,45,.035), transparent 20%),
+        #f8f2ec;
+    }
+
+    .chat-header {
+      height: 74px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      background: white;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .back-btn {
+      display: none;
+      border: 0;
+      background: transparent;
+      font-size: 25px;
+    }
+
+    .chat-title {
+      font-weight: 800;
+    }
+
+    .chat-status {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .welcome {
+      margin: auto;
+      text-align: center;
+      max-width: 350px;
+      color: var(--muted);
+    }
+
+    .welcome-logo {
+      width: 90px;
+      height: 90px;
+      border-radius: 28px;
+      background: var(--brown);
+      color: white;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 35px;
+      font-weight: 900;
+    }
+
+    .message {
+      max-width: min(70%, 520px);
+      padding: 10px 13px;
+      border-radius: 16px;
+      background: white;
+      box-shadow: 0 1px 2px rgba(0,0,0,.05);
+      align-self: flex-start;
+    }
+
+    .message.mine {
+      background: #e4cbb9;
+      align-self: flex-end;
+    }
+
+    .message-time {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    .composer {
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+      background: white;
+      border-top: 1px solid var(--line);
+    }
+
+    .attach {
+      width: 45px;
+      border: 0;
+      border-radius: 14px;
+      background: #f1e8e1;
+      color: var(--brown);
+      font-size: 20px;
+    }
+
+    .composer input {
+      flex: 1;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      outline: 0;
+    }
+
+    .send {
+      width: 48px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--brown);
+      color: white;
+      font-size: 20px;
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 700px) {
+      .sidebar {
+        width: 100%;
+        max-width: 100%;
+        border: 0;
+      }
+
+      .chat {
+        display: none;
+      }
+
+      .app-shell.chat-open .sidebar {
+        display: none;
+      }
+
+      .app-shell.chat-open .chat {
+        display: flex;
+      }
+
+      .back-btn {
+        display: block;
+      }
+
+      .message {
+        max-width: 82%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="app"></div>
+
+<script>
+  /*
+    ==========================================
+    PrēDa
+    Frontend
+    ==========================================
+
+    ВАЖНО:
+    Пока оставляем этот адрес.
+    После окончательной настройки сервера
+    заменим его на настоящий Render URL.
+  */
+
+  const API_URL = window.location.origin;
+
+  let token = localStorage.getItem("preda_token");
+  let currentUser = null;
+  let currentChat = null;
+  let contacts = [];
+
+  const app = document.getElementById("app");
+
+  function esc(text) {
+    return String(text || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function initials(name) {
+    if (!name) return "?";
+    return name.trim().slice(0, 2).toUpperCase();
+  }
+
+  function showError(text) {
+    const el = document.getElementById("error");
+    if (!el) return;
+    el.textContent = text;
+    el.style.display = "block";
+  }
+
+  function hideError() {
+    const el = document.getElementById("error");
+    if (el) el.style.display = "none";
+  }
+
+  function renderAuth(login = false) {
+    app.innerHTML = `
+      <div class="auth">
+        <div class="auth-card">
+
+          <div class="logo">P</div>
+
+          <div class="auth-title">PrēDa</div>
+          <div class="auth-subtitle">
+            ${login ? "Войдите в свой аккаунт" : "Создайте свой аккаунт"}
+          </div>
+
+          <div id="error" class="error"></div>
+
+          ${
+            login
+            ? `
+              <div class="field">
+                <label>Публичный код</label>
+                <input id="loginCode"
+                       placeholder="PD-XXXXXXXXXX"
+                       autocomplete="username">
+              </div>
+
+              <div class="field">
+                <label>Пароль</label>
+                <input id="loginPassword"
+                       type="password"
+                       placeholder="Ваш пароль">
+              </div>
+
+              <button class="primary" onclick="loginUser()">
+                Войти
+              </button>
+
+              <div class="auth-switch">
+                Нет аккаунта?
+                <span onclick="renderAuth(false)">Зарегистрироваться</span>
+              </div>
+            `
+            :
+            `
+              <div class="field">
+                <label>Имя</label>
+                <input id="regName"
+                       placeholder="Как вас зовут?">
+              </div>
+
+              <div class="field">
+                <label>О себе</label>
+                <textarea id="regBio"
+                          placeholder="Расскажите немного о себе"></textarea>
+              </div>
+
+              <div class="field">
+                <label>Пароль</label>
+                <input id="regPassword"
+                       type="password"
+                       placeholder="Придумайте пароль">
+              </div>
+
+              <button class="primary" onclick="registerUser()">
+                Создать аккаунт
+              </button>
+
+              <div class="auth-switch">
+                Уже есть аккаунт?
+                <span onclick="renderAuth(true)">Войти</span>
+              </div>
+            `
+          }
+
+        </div>
+      </div>
+    `;
+  }
+
+  async function registerUser() {
+    hideError();
+
+    const name = document.getElementById("regName").value.trim();
+    const bio = document.getElementById("regBio").value.trim();
+    const password = document.getElementById("regPassword").value;
+
+    if (!name) {
+      showError("Введите имя");
+      return;
+    }
+
+    if (password.length < 6) {
+      showError("Пароль должен быть минимум 6 символов");
+      return;
+    }
+
+    try {
+      const response = await fetch(API_URL + "/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name,
+          bio,
+          password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Ошибка регистрации");
+      }
+
+      token = data.token;
+      localStorage.setItem("preda_token", token);
+
+      currentUser = data.user;
+
+      renderMessenger();
+
+    } catch (error) {
+      showError(error.message);
+    }
+  }
+
+  async function loginUser() {
+    hideError();
+
+    const code = document.getElementById("loginCode").value.trim();
+    const password = document.getElementById("loginPassword").value;
+
+    if (!code || !password) {
+      showError("Введите код и пароль");
+      return;
+    }
+
+    try {
+      const response = await fetch(API_URL + "/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          code,
+          password
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Ошибка входа");
+      }
+
+      token = data.token;
+      localStorage.setItem("preda_token", token);
+
+      currentUser = data.user;
+
+      renderMessenger();
+
+    } catch (error) {
+      showError(error.message);
+    }
+  }
+
+  async function loadMe() {
+    if (!token) {
+      renderAuth();
+      return;
+    }
+
+    try {
+      const response = await fetch(API_URL + "/api/me", {
+        headers: {
+          Authorization: "Bearer " + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      currentUser = await response.json();
+
+      renderMessenger();
+
+    } catch {
+      localStorage.removeItem("preda_token");
+      token = null;
+      renderAuth();
+    }
+  }
+
+  function renderMessenger() {
+
+    app.innerHTML = `
+      <div class="app-shell" id="shell">
+
+        <aside class="sidebar">
+
+          <div class="sidebar-header">
+
+            <div class="top-row">
+
+              <div class="brand">
+                PrēDa
+              </div>
+
+              <div class="header-actions">
+                <button class="icon-btn"
+                        onclick="openProfile()">
+                  👤
+                </button>
+
+                <button class="icon-btn"
+                        onclick="openMenu()">
+                  ⋮
+                </button>
+              </div>
+
+            </div>
+
+            <div class="search">
+
+              <span>🔎</span>
+
+              <input
+                id="searchInput"
+                placeholder="Поиск по коду..."
+                onkeydown="searchKey(event)"
+              >
+
+            </div>
+
+          </div>
+
+          <div class="tabs">
+
+            <button class="tab active"
+                    onclick="switchTab(this,'contacts')">
+              Контакты
+            </button>
+
+            <button class="tab"
+                    onclick="switchTab(this,'groups')">
+              Группы
+            </button>
+
+            <button class="tab"
+                    onclick="switchTab(this,'channels')">
+              Каналы
+            </button>
+
+          </div>
+
+          <div id="list" class="list"></div>
+
+        </aside>
+
+
+        <main class="chat">
+
+          <header class="chat-header">
+
+            <button class="back-btn"
+                    onclick="closeChat()">
+              ←
+            </button>
+
+            <div id="chatAvatar"
+                 class="avatar">
+              P
+            </div>
+
+            <div>
+
+              <div id="chatTitle"
+                   class="chat-title">
+                PrēDa
+              </div>
+
+              <div id="chatStatus"
+                   class="chat-status">
+                Выберите чат
+              </div>
+
+            </div>
+
+          </header>
+
+
+          <section id="messages"
+                   class="messages">
+
+            <div class="welcome">
+
+              <div class="welcome-logo">
+                P
+              </div>
+
+              <h2>Добро пожаловать в PrēDa</h2>
+
+              <p>
+                Найдите человека по публичному коду
+                и начните общение.
+              </p>
+
+            </div>
+
+          </section>
+
+
+          <div class="composer">
+
+            <button class="attach"
+                    onclick="chooseFile()">
+              ＋
+            </button>
+
+            <input
+              id="messageInput"
+              placeholder="Сообщение..."
+              onkeydown="messageKey(event)"
+            >
+
+            <button class="send"
+                    onclick="sendMessage()">
+              ➤
+            </button>
+
+          </div>
+
+        </main>
+
+      </div>
+    `;
+
+    loadContacts();
+  }
+
+  async function loadContacts() {
+
+    const list = document.getElementById("list");
+
+    list.innerHTML = `
+      <div class="empty">
+        Загрузка...
+      </div>
+    `;
+
+    try {
+
+      const response = await fetch(API_URL + "/api/contacts", {
+        headers: {
+          Authorization: "Bearer " + token
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error();
+      }
+
+      contacts = await response.json();
+
+      renderContacts();
+
+    } catch {
+
+      /*
+        Если база ещё не настроена,
+        показываем пустой список.
+      */
+
+      contacts = [];
+
+      renderContacts();
+
+    }
+  }
+
+  function renderContacts() {
+
+    const list = document.getElementById("list");
+
+    if (!contacts.length) {
+
+      list.innerHTML = `
+        <div class="empty">
+
+          <div style="font-size:42px">
+            👥
+          </div>
+
+          <h3>Контактов пока нет</h3>
+
+          <p>
+            Используйте 🔎 сверху,
+            чтобы найти человека
+            по его публичному коду.
+          </p>
+
+        </div>
+      `;
+
+      return;
+    }
+
+    list.innerHTML = contacts.map(user => `
+
+      <div class="item"
+           onclick="openUser(${user.id})">
+
+        <div class="avatar">
+          ${initials(user.name)}
+        </div>
+
+        <div class="item-info">
+
+          <div class="item-name">
+            ${esc(user.name)}
+          </div>
+
+          <div class="item-preview">
+            ${esc(user.bio || "PrēDa")}
+          </div>
+
+        </div>
+
+      </div>
+
+    `).join("");
+  }
+
+  function switchTab(button, type) {
+
+    document.querySelectorAll(".tab")
+      .forEach(x => x.classList.remove("active"));
+
+    button.classList.add("active");
+
+    const list = document.getElementById("list");
+
+    if (type === "groups") {
+
+      list.innerHTML = `
+        <div class="empty">
+
+          <div style="font-size:42px">👥</div>
+
+          <h3>Группы</h3>
+
+          <p>
+            Здесь будут групповые чаты PrēDa.
+          </p>
+
+          <button
+            class="primary"
+            style="max-width:250px"
+            onclick="createGroup()">
+            ＋ Создать группу
+          </button>
+
+        </div>
+      `;
+
+    } else if (type === "channels") {
+
+      list.innerHTML = `
+        <div class="empty">
+
+          <div style="font-size:42px">📢</div>
+
+          <h3>Каналы</h3>
+
+          <p>
+            Здесь будут каналы PrēDa.
+          </p>
+
+          <button
+            class="primary"
+            style="max-width:250px"
+            onclick="createChannel()">
+            ＋ Создать канал
+          </button>
+
+        </div>
+      `;
+
+    } else {
+
+      renderContacts();
+
+    }
+  }
+
+  async function searchKey(event) {
+
+    if (event.key !== "Enter") return;
+
+    const code = event.target.value.trim();
+
+    if (!code) return;
+
+    try {
+
+      const response = await fetch(
+        API_URL + "/api/users/by-code/" + encodeURIComponent(code),
+        {
+          headers: {
+            Authorization: "Bearer " + token
+          }
+        }
+      );
+
+      const user = await response.json();
+
+      if (!response.ok) {
+        alert(user.error || "Пользователь не найден");
+        return;
+      }
+
+      showUserResult(user);
+
+    } catch {
+
+      alert("Не удалось выполнить поиск");
+
+    }
+  }
+
+  function showUserResult(user) {
+
+    const list = document.getElementById("list");
+
+    list.innerHTML = `
+
+      <div class="item">
+
+        <div class="avatar">
+          ${initials(user.name)}
+        </div>
+
+        <div class="item-info">
+
+          <div class="item-name">
+            ${esc(user.name)}
+          </div>
+
+          <div class="item-preview">
+            ${esc(user.bio || "Нет информации")}
+          </div>
+
+          <div class="item-preview">
+            Код: ${esc(user.public_code)}
+          </div>
+
+        </div>
+
+        <button
+          onclick="event.stopPropagation(); addContact(${user.id})"
+          style="
+            border:0;
+            background:#6f432d;
+            color:white;
+            border-radius:10px;
+            padding:9px;
+          ">
+          Добавить
+        </button>
+
+      </div>
+    `;
+  }
+
+  async function addContact(userId) {
+
+    try {
+
+      const response = await fetch(API_URL + "/api/contacts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token
+        },
+        body: JSON.stringify({
+          userId
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Не удалось добавить");
+        return;
+      }
+
+      await loadContacts();
+
+      alert("Контакт добавлен");
+
+    } catch {
+
+      alert("Ошибка соединения");
+
+    }
+  }
+
+  async function openUser(userId) {
+
+    try {
+
+      const response = await fetch(
+        API_URL + "/api/chats/direct/" + userId,
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + token
+          }
+        }
+      );
+
+      const chat = await response.json();
+
+      if (!response.ok) {
+        alert(chat.error || "Не удалось открыть чат");
+        return;
+      }
+
+      currentChat = chat;
+
+      document.getElementById("shell")
+        .classList.add("chat-open");
+
+      document.getElementById("chatTitle")
+        .textContent = chat.user?.name || "Чат";
+
+      document.getElementById("chatStatus")
+        .textContent = "В сети";
+
+      loadMessages(chat.id);
+
+    } catch {
+
+      alert("Ошибка соединения");
+
+    }
+  }
+
+  async function loadMessages(chatId) {
+
+    const box = document.getElementById("messages");
+
+    box.innerHTML = "";
+
+    try {
+
+      const response = await fetch(
+        API_URL + "/api/chats/" + chatId + "/messages",
+        {
+          headers: {
+            Authorization: "Bearer " + token
+          }
+        }
+      );
+
+      const messages = await response.json();
+
+      if (!Array.isArray(messages) || !messages.length) {
+
+        box.innerHTML = `
+          <div class="welcome">
+            <h3>Начните общение</h3>
+            <p>
+              Здесь появятся ваши сообщения.
+            </p>
+          </div>
+        `;
+
+        return;
+      }
+
+      messages.forEach(addMessageToScreen);
+
+    } catch {
+
+      box.innerHTML = `
+        <div class="welcome">
+          Не удалось загрузить сообщения.
+        </div>
+      `;
+    }
+  }
+
+  function addMessageToScreen(message) {
+
+    const box = document.getElementById("messages");
+
+    const mine =
+      Number(message.sender_id) === Number(currentUser.id);
+
+    const div = document.createElement("div");
+
+    div.className =
+      "message" + (mine ? " mine" : "");
+
+    div.innerHTML = `
+      <div>
+        ${esc(message.text || "")}
+      </div>
+
+      <div class="message-time">
+        ${new Date(message.created_at)
+          .toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit"
+          })}
+      </div>
+    `;
+
+    box.appendChild(div);
+
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function sendMessage() {
+
+    if (!currentChat) {
+      alert("Сначала откройте чат");
+      return;
+    }
+
+    const input =
+      document.getElementById("messageInput");
+
+    const text = input.value.trim();
+
+    if (!text) return;
+
+    input.value = "";
+
+    try {
+
+      const response = await fetch(
+        API_URL + "/api/chats/" +
+        currentChat.id +
+        "/messages",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token
+          },
+
+          body: JSON.stringify({
+            text
+          })
+        }
+      );
+
+      const message = await response.json();
+
+      if (!response.ok) {
+        alert(message.error || "Сообщение не отправлено");
+        return;
+      }
+
+      addMessageToScreen(message);
+
+    } catch {
+
+      alert("Нет соединения с сервером");
+
+    }
+  }
+
+  function messageKey(event) {
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      sendMessage();
+    }
+  }
+
+  function searchKeyDummy() {}
+
+  function closeChat() {
+
+    document.getElementById("shell")
+      .classList.remove("chat-open");
+
+    currentChat = null;
+  }
+
+  function openProfile() {
+
+    alert(
+      "Профиль\n\n" +
+      "Имя: " + (currentUser?.name || "") +
+      "\nКод: " + (currentUser?.public_code || "") +
+      "\n\n" +
+      (currentUser?.bio || "")
+    );
+  }
+
+  function openMenu() {
+
+    const choice = confirm(
+      "Выйти из PrēDa?"
+    );
+
+    if (!choice) return;
+
+    localStorage.removeItem("preda_token");
+
+    token = null;
+    currentUser = null;
+
+    renderAuth(true);
+  }
+
+  function chooseFile() {
+
+    const input = document.createElement("input");
+
+    input.type = "file";
+
+    input.onchange = () => {
+
+      if (!input.files.length) return;
+
+      alert(
+        "Файл выбран: " +
+        input.files[0].name +
+        "\nЗагрузку файлов подключим следующим этапом."
+      );
+    };
+
+    input.click();
+  }
+
+  function createGroup() {
+
+    alert(
+      "Создание групп подключим к серверу следующим этапом."
+    );
+  }
+
+  function createChannel() {
+
+    alert(
+      "Создание каналов подключим к серверу следующим этапом."
+    );
+  }
+
+  /*
+    Запуск
+  */
+
+  loadMe();
+</script>
+
+</body>
+</html>
