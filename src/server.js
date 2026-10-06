@@ -2,194 +2,283 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+const path = require("path");
+const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
-const http = require("http");
-const WebSocket = require("ws");
-const crypto = require("crypto");
+const { WebSocketServer } = require("ws");
 
 const app = express();
 const server = http.createServer(app);
-
-app.use(cors());
-app.use(express.json({ limit: "10mb" }));
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET =
   process.env.JWT_SECRET || "CHANGE_THIS_SECRET_IN_RENDER";
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL
-    ? { rejectUnauthorized: false }
-    : false
-});
+const DATABASE_URL = process.env.DATABASE_URL || "";
+
+const pool = DATABASE_URL
+  ? new Pool({
+      connectionString: DATABASE_URL,
+      ssl: DATABASE_URL.includes("localhost")
+        ? false
+        : { rejectUnauthorized: false },
+    })
+  : null;
+
+// =========================
+// BASIC SETTINGS
+// =========================
+
+app.use(cors());
+app.use(express.json({ limit: "10mb" }));
+
+// =========================
+// FRONTEND
+// =========================
+
+const publicPath = path.join(__dirname, "..", "public");
+
+app.use(express.static(publicPath));
 
 app.get("/", (req, res) => {
-  res.json({
-    service: "PrēDa Messenger Server",
-    status: "online"
-  });
+  res.sendFile(path.join(publicPath, "index.html"));
 });
+
+// =========================
+// HEALTH
+// =========================
 
 app.get("/api/health", async (req, res) => {
   try {
+    if (!pool) {
+      return res.json({
+        status: "online",
+        database: "not configured",
+      });
+    }
+
     await pool.query("SELECT 1");
 
     res.json({
-      ok: true,
-      server: "online",
-      database: "online"
+      status: "online",
+      database: "connected",
     });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
-      ok: false,
-      server: "online",
-      database: "offline"
+      status: "error",
+      database: "disconnected",
     });
   }
 });
 
-function generateCode() {
+// =========================
+// HELPERS
+// =========================
+
+function generatePublicCode() {
   return (
     "PD-" +
-    crypto
-      .randomBytes(5)
-      .toString("hex")
-      .toUpperCase()
+    crypto.randomBytes(5).toString("hex").toUpperCase()
   );
-}
-
-async function generateUniqueCode() {
-  while (true) {
-    const code = generateCode();
-
-    const result = await pool.query(
-      "SELECT id FROM users WHERE public_code = $1",
-      [code]
-    );
-
-    if (result.rows.length === 0) {
-      return code;
-    }
-  }
 }
 
 function createToken(user) {
   return jwt.sign(
     {
       id: user.id,
-      publicCode: user.public_code
+      publicCode: user.public_code,
     },
     JWT_SECRET,
     {
-      expiresIn: "30d"
+      expiresIn: "30d",
     }
   );
 }
 
 function auth(req, res, next) {
-  const header = req.headers.authorization;
-
-  if (!header || !header.startsWith("Bearer ")) {
-    return res.status(401).json({
-      error: "Требуется авторизация"
-    });
-  }
-
-  const token = header.substring(7);
-
   try {
-    req.user = jwt.verify(token, JWT_SECRET);
+    const header = req.headers.authorization || "";
+
+    if (!header.startsWith("Bearer ")) {
+      return res.status(401).json({
+        error: "Требуется авторизация",
+      });
+    }
+
+    const token = header.substring(7);
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    req.user = decoded;
+
     next();
-  } catch {
+  } catch (error) {
     return res.status(401).json({
-      error: "Недействительный токен"
+      error: "Недействительный токен",
     });
   }
 }
 
-/*
-================================
-REGISTRATION
-================================
-*/
+// =========================
+// REGISTER
+// =========================
 
 app.post("/api/auth/register", async (req, res) => {
   try {
-    const { name, bio = "", password } = req.body;
+    if (!pool) {
+      return res.status(500).json({
+        error: "PostgreSQL ещё не подключён",
+      });
+    }
+
+    const {
+      name,
+      bio = "",
+      password,
+    } = req.body;
 
     if (!name || !password) {
       return res.status(400).json({
-        error: "Укажите имя и пароль"
+        error: "Введите имя и пароль",
       });
     }
 
-    if (name.length > 100) {
+    if (String(name).length < 2) {
       return res.status(400).json({
-        error: "Имя слишком длинное"
+        error: "Имя слишком короткое",
       });
     }
 
-    if (password.length < 6) {
+    if (String(password).length < 6) {
       return res.status(400).json({
-        error: "Пароль должен содержать минимум 6 символов"
+        error: "Пароль должен содержать минимум 6 символов",
+      });
+    }
+
+    let publicCode;
+
+    for (let i = 0; i < 10; i++) {
+      const candidate = generatePublicCode();
+
+      const check = await pool.query(
+        "SELECT id FROM users WHERE public_code = $1",
+        [candidate]
+      );
+
+      if (check.rows.length === 0) {
+        publicCode = candidate;
+        break;
+      }
+    }
+
+    if (!publicCode) {
+      return res.status(500).json({
+        error: "Не удалось создать публичный код",
       });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const publicCode = await generateUniqueCode();
 
     const result = await pool.query(
       `
       INSERT INTO users
-      (public_code, name, bio, password_hash)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, public_code, name, bio, avatar_url, created_at
+      (
+        public_code,
+        name,
+        bio,
+        password_hash
+      )
+      VALUES
+      ($1, $2, $3, $4)
+      RETURNING
+        id,
+        public_code,
+        name,
+        bio,
+        avatar_url,
+        created_at
       `,
-      [publicCode, name, bio, passwordHash]
+      [
+        publicCode,
+        String(name).trim(),
+        String(bio || "").trim(),
+        passwordHash,
+      ]
     );
 
     const user = result.rows[0];
 
+    const token = createToken(user);
+
     res.status(201).json({
-      user,
-      token: createToken(user)
+      user: {
+        id: user.id,
+        publicCode: user.public_code,
+        name: user.name,
+        bio: user.bio,
+        avatarUrl: user.avatar_url,
+      },
+      token,
     });
   } catch (error) {
-    console.error(error);
+    console.error("REGISTER ERROR:", error);
 
     res.status(500).json({
-      error: "Ошибка регистрации"
+      error: "Ошибка регистрации",
     });
   }
 });
 
-/*
-================================
-LOGIN
-================================
-*/
+// =========================
+// LOGIN
+// =========================
 
 app.post("/api/auth/login", async (req, res) => {
   try {
-    const { publicCode, password } = req.body;
+    if (!pool) {
+      return res.status(500).json({
+        error: "PostgreSQL ещё не подключён",
+      });
+    }
 
-    if (!publicCode || !password) {
+    const {
+      publicCode,
+      password,
+      code,
+    } = req.body;
+
+    const finalCode = publicCode || code;
+
+    if (!finalCode || !password) {
       return res.status(400).json({
-        error: "Введите код и пароль"
+        error: "Введите публичный код и пароль",
       });
     }
 
     const result = await pool.query(
-      "SELECT * FROM users WHERE public_code = $1",
-      [publicCode.toUpperCase()]
+      `
+      SELECT
+        id,
+        public_code,
+        name,
+        bio,
+        avatar_url,
+        password_hash
+      FROM users
+      WHERE UPPER(public_code) = UPPER($1)
+      LIMIT 1
+      `,
+      [String(finalCode).trim()]
     );
 
     if (result.rows.length === 0) {
       return res.status(401).json({
-        error: "Пользователь не найден"
+        error: "Пользователь не найден",
       });
     }
 
@@ -202,42 +291,46 @@ app.post("/api/auth/login", async (req, res) => {
 
     if (!valid) {
       return res.status(401).json({
-        error: "Неверный пароль"
+        error: "Неверный пароль",
       });
     }
+
+    const token = createToken(user);
 
     res.json({
       user: {
         id: user.id,
-        public_code: user.public_code,
+        publicCode: user.public_code,
         name: user.name,
         bio: user.bio,
-        avatar_url: user.avatar_url,
-        created_at: user.created_at
+        avatarUrl: user.avatar_url,
       },
-      token: createToken(user)
+      token,
     });
   } catch (error) {
-    console.error(error);
+    console.error("LOGIN ERROR:", error);
 
     res.status(500).json({
-      error: "Ошибка входа"
+      error: "Ошибка входа",
     });
   }
 });
 
-/*
-================================
-MY PROFILE
-================================
-*/
+// =========================
+// CURRENT USER
+// =========================
 
 app.get("/api/me", auth, async (req, res) => {
   try {
     const result = await pool.query(
       `
-      SELECT id, public_code, name, bio,
-             avatar_url, created_at
+      SELECT
+        id,
+        public_code,
+        name,
+        bio,
+        avatar_url,
+        created_at
       FROM users
       WHERE id = $1
       `,
@@ -246,21 +339,40 @@ app.get("/api/me", auth, async (req, res) => {
 
     if (result.rows.length === 0) {
       return res.status(404).json({
-        error: "Пользователь не найден"
+        error: "Пользователь не найден",
       });
     }
 
-    res.json(result.rows[0]);
+    const user = result.rows[0];
+
+    res.json({
+      id: user.id,
+      publicCode: user.public_code,
+      name: user.name,
+      bio: user.bio,
+      avatarUrl: user.avatar_url,
+      createdAt: user.created_at,
+    });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
-      error: "Ошибка получения профиля"
+      error: "Ошибка получения профиля",
     });
   }
 });
 
+// =========================
+// UPDATE PROFILE
+// =========================
+
 app.patch("/api/me", auth, async (req, res) => {
   try {
-    const { name, bio, avatar_url } = req.body;
+    const {
+      name,
+      bio,
+      avatarUrl,
+    } = req.body;
 
     const result = await pool.query(
       `
@@ -270,63 +382,99 @@ app.patch("/api/me", auth, async (req, res) => {
         bio = COALESCE($2, bio),
         avatar_url = COALESCE($3, avatar_url)
       WHERE id = $4
-      RETURNING id, public_code, name, bio,
-                avatar_url, created_at
+      RETURNING
+        id,
+        public_code,
+        name,
+        bio,
+        avatar_url
       `,
-      [name, bio, avatar_url, req.user.id]
+      [
+        name ?? null,
+        bio ?? null,
+        avatarUrl ?? null,
+        req.user.id,
+      ]
     );
 
-    res.json(result.rows[0]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Пользователь не найден",
+      });
+    }
+
+    const user = result.rows[0];
+
+    res.json({
+      id: user.id,
+      publicCode: user.public_code,
+      name: user.name,
+      bio: user.bio,
+      avatarUrl: user.avatar_url,
+    });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
-      error: "Ошибка изменения профиля"
+      error: "Ошибка обновления профиля",
     });
   }
 });
 
-/*
-================================
-SEARCH USER BY PUBLIC CODE
-================================
-*/
+// =========================
+// SEARCH USER BY PUBLIC CODE
+// =========================
 
 app.get(
   "/api/users/by-code/:code",
   auth,
   async (req, res) => {
     try {
-      const code = req.params.code.toUpperCase();
-
       const result = await pool.query(
         `
-        SELECT id, public_code, name, bio, avatar_url
+        SELECT
+          id,
+          public_code,
+          name,
+          bio,
+          avatar_url
         FROM users
-        WHERE public_code = $1
+        WHERE UPPER(public_code) = UPPER($1)
+        LIMIT 1
         `,
-        [code]
+        [req.params.code.trim()]
       );
 
       if (result.rows.length === 0) {
         return res.status(404).json({
-          error: "Пользователь не найден"
+          error: "Пользователь не найден",
         });
       }
 
-      res.json(result.rows[0]);
+      const user = result.rows[0];
+
+      res.json({
+        id: user.id,
+        publicCode: user.public_code,
+        name: user.name,
+        bio: user.bio,
+        avatarUrl: user.avatar_url,
+      });
     } catch (error) {
+      console.error(error);
+
       res.status(500).json({
-        error: "Ошибка поиска"
+        error: "Ошибка поиска",
       });
     }
   }
 );
 
-/*
-================================
-ADD CONTACT
-================================
-*/
+// =========================
+// CONTACTS
+// =========================
 
+// Новый вариант
 app.post(
   "/api/contacts/:userId",
   auth,
@@ -334,149 +482,222 @@ app.post(
     try {
       const contactId = Number(req.params.userId);
 
+      if (!Number.isInteger(contactId)) {
+        return res.status(400).json({
+          error: "Неверный ID пользователя",
+        });
+      }
+
       if (contactId === Number(req.user.id)) {
         return res.status(400).json({
-          error: "Нельзя добавить самого себя"
+          error: "Нельзя добавить самого себя",
         });
       }
 
       await pool.query(
         `
         INSERT INTO contacts
-        (user_id, contact_id)
-        VALUES ($1, $2)
+        (
+          user_id,
+          contact_id
+        )
+        VALUES
+        ($1, $2)
         ON CONFLICT DO NOTHING
         `,
         [req.user.id, contactId]
       );
 
       res.json({
-        ok: true
+        success: true,
       });
     } catch (error) {
+      console.error(error);
+
       res.status(500).json({
-        error: "Ошибка добавления контакта"
+        error: "Ошибка добавления контакта",
       });
     }
   }
 );
 
-app.get("/api/contacts", auth, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `
-      SELECT
-        u.id,
-        u.public_code,
-        u.name,
-        u.bio,
-        u.avatar_url
-      FROM contacts c
-      JOIN users u
-        ON u.id = c.contact_id
-      WHERE c.user_id = $1
-      ORDER BY u.name
-      `,
-      [req.user.id]
-    );
+// Совместимость со старым frontend
+app.post(
+  "/api/contacts",
+  auth,
+  async (req, res) => {
+    try {
+      const contactId = Number(req.body.userId);
 
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({
-      error: "Ошибка получения контактов"
-    });
+      if (!Number.isInteger(contactId)) {
+        return res.status(400).json({
+          error: "Неверный ID пользователя",
+        });
+      }
+
+      if (contactId === Number(req.user.id)) {
+        return res.status(400).json({
+          error: "Нельзя добавить самого себя",
+        });
+      }
+
+      await pool.query(
+        `
+        INSERT INTO contacts
+        (
+          user_id,
+          contact_id
+        )
+        VALUES
+        ($1, $2)
+        ON CONFLICT DO NOTHING
+        `,
+        [req.user.id, contactId]
+      );
+
+      res.json({
+        success: true,
+      });
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        error: "Ошибка добавления контакта",
+      });
+    }
   }
-});
+);
 
-/*
-================================
-CREATE DIRECT CHAT
-================================
-*/
+app.get(
+  "/api/contacts",
+  auth,
+  async (req, res) => {
+    try {
+      const result = await pool.query(
+        `
+        SELECT
+          u.id,
+          u.public_code,
+          u.name,
+          u.bio,
+          u.avatar_url
+        FROM contacts c
+        JOIN users u
+          ON u.id = c.contact_id
+        WHERE c.user_id = $1
+        ORDER BY u.name ASC
+        `,
+        [req.user.id]
+      );
+
+      res.json(
+        result.rows.map((user) => ({
+          id: user.id,
+          publicCode: user.public_code,
+          name: user.name,
+          bio: user.bio,
+          avatarUrl: user.avatar_url,
+        }))
+      );
+    } catch (error) {
+      console.error(error);
+
+      res.status(500).json({
+        error: "Ошибка получения контактов",
+      });
+    }
+  }
+);
+
+// =========================
+// DIRECT CHAT
+// =========================
 
 app.post(
   "/api/chats/direct/:userId",
   auth,
   async (req, res) => {
-    const otherUserId = Number(req.params.userId);
-
-    if (otherUserId === Number(req.user.id)) {
-      return res.status(400).json({
-        error: "Нельзя создать чат с самим собой"
-      });
-    }
-
-    const client = await pool.connect();
-
     try {
-      await client.query("BEGIN");
+      const otherUserId = Number(req.params.userId);
 
-      const existing = await client.query(
+      if (!Number.isInteger(otherUserId)) {
+        return res.status(400).json({
+          error: "Неверный пользователь",
+        });
+      }
+
+      if (otherUserId === Number(req.user.id)) {
+        return res.status(400).json({
+          error: "Нельзя создать чат с собой",
+        });
+      }
+
+      const existing = await pool.query(
         `
         SELECT c.id
         FROM chats c
-        JOIN chat_members a
-          ON a.chat_id = c.id
-        JOIN chat_members b
-          ON b.chat_id = c.id
+        JOIN chat_members cm1
+          ON cm1.chat_id = c.id
+        JOIN chat_members cm2
+          ON cm2.chat_id = c.id
         WHERE c.type = 'direct'
-          AND a.user_id = $1
-          AND b.user_id = $2
+          AND cm1.user_id = $1
+          AND cm2.user_id = $2
         LIMIT 1
         `,
         [req.user.id, otherUserId]
       );
 
       if (existing.rows.length > 0) {
-        await client.query("COMMIT");
-
         return res.json({
-          chatId: existing.rows[0].id
+          chatId: existing.rows[0].id,
         });
       }
 
-      const chat = await client.query(
+      const chatResult = await pool.query(
         `
         INSERT INTO chats(type)
-        VALUES('direct')
+        VALUES ('direct')
         RETURNING id
         `
       );
 
-      const chatId = chat.rows[0].id;
+      const chatId = chatResult.rows[0].id;
 
-      await client.query(
+      await pool.query(
         `
-        INSERT INTO chat_members(chat_id, user_id)
+        INSERT INTO chat_members
+        (
+          chat_id,
+          user_id
+        )
         VALUES
         ($1, $2),
         ($1, $3)
         `,
-        [chatId, req.user.id, otherUserId]
+        [
+          chatId,
+          req.user.id,
+          otherUserId,
+        ]
       );
 
-      await client.query("COMMIT");
-
       res.status(201).json({
-        chatId
+        chatId,
       });
     } catch (error) {
-      await client.query("ROLLBACK");
+      console.error(error);
 
       res.status(500).json({
-        error: "Ошибка создания чата"
+        error: "Ошибка создания чата",
       });
-    } finally {
-      client.release();
     }
   }
 );
 
-/*
-================================
-GET MESSAGES
-================================
-*/
+// =========================
+// GET MESSAGES
+// =========================
 
 app.get(
   "/api/chats/:chatId/messages",
@@ -497,7 +718,7 @@ app.get(
 
       if (member.rows.length === 0) {
         return res.status(403).json({
-          error: "Нет доступа к этому чату"
+          error: "Нет доступа к этому чату",
         });
       }
 
@@ -514,32 +735,45 @@ app.get(
           m.file_size,
           m.mime_type,
           m.created_at,
-          u.name AS sender_name,
-          u.avatar_url AS sender_avatar
+          u.name AS sender_name
         FROM messages m
         JOIN users u
           ON u.id = m.sender_id
         WHERE m.chat_id = $1
         ORDER BY m.created_at ASC
-        LIMIT 500
+        LIMIT 200
         `,
         [chatId]
       );
 
-      res.json(result.rows);
+      res.json(
+        result.rows.map((message) => ({
+          id: message.id,
+          chatId: message.chat_id,
+          senderId: message.sender_id,
+          senderName: message.sender_name,
+          type: message.type,
+          text: message.text,
+          fileUrl: message.file_url,
+          fileName: message.file_name,
+          fileSize: message.file_size,
+          mimeType: message.mime_type,
+          createdAt: message.created_at,
+        }))
+      );
     } catch (error) {
+      console.error(error);
+
       res.status(500).json({
-        error: "Ошибка получения сообщений"
+        error: "Ошибка загрузки сообщений",
       });
     }
   }
 );
 
-/*
-================================
-SEND TEXT MESSAGE
-================================
-*/
+// =========================
+// SEND MESSAGE
+// =========================
 
 app.post(
   "/api/chats/:chatId/messages",
@@ -547,11 +781,15 @@ app.post(
   async (req, res) => {
     try {
       const chatId = Number(req.params.chatId);
-      const { text } = req.body;
 
-      if (!text || !text.trim()) {
+      const {
+        text = "",
+        type = "text",
+      } = req.body;
+
+      if (!String(text).trim()) {
         return res.status(400).json({
-          error: "Сообщение пустое"
+          error: "Сообщение пустое",
         });
       }
 
@@ -567,100 +805,120 @@ app.post(
 
       if (member.rows.length === 0) {
         return res.status(403).json({
-          error: "Нет доступа к чату"
+          error: "Нет доступа к чату",
         });
       }
 
       const result = await pool.query(
         `
         INSERT INTO messages
-        (chat_id, sender_id, type, text)
-        VALUES ($1, $2, 'text', $3)
-        RETURNING *
+        (
+          chat_id,
+          sender_id,
+          type,
+          text
+        )
+        VALUES
+        ($1, $2, $3, $4)
+        RETURNING
+          id,
+          chat_id,
+          sender_id,
+          type,
+          text,
+          created_at
         `,
-        [chatId, req.user.id, text.trim()]
+        [
+          chatId,
+          req.user.id,
+          type,
+          String(text).trim(),
+        ]
       );
 
       const message = result.rows[0];
 
       broadcastToChat(chatId, {
         event: "message",
-        message
+        message,
       });
 
-      res.status(201).json(message);
+      res.status(201).json({
+        ...message,
+      });
     } catch (error) {
       console.error(error);
 
       res.status(500).json({
-        error: "Ошибка отправки сообщения"
+        error: "Ошибка отправки сообщения",
       });
     }
   }
 );
 
-/*
-================================
-WEBSOCKET
-================================
-*/
+// =========================
+// WEBSOCKET
+// =========================
 
-const wss = new WebSocket.Server({
+const wss = new WebSocketServer({
   server,
-  path: "/ws"
+  path: "/ws",
 });
 
-const connections = new Map();
+const sockets = new Map();
 
-wss.on("connection", (socket, request) => {
+wss.on("connection", (ws, req) => {
   try {
     const url = new URL(
-      request.url,
-      `http://${request.headers.host}`
+      req.url,
+      `http://${req.headers.host}`
     );
 
     const token = url.searchParams.get("token");
 
     if (!token) {
-      socket.close();
+      ws.close(1008, "No token");
       return;
     }
 
-    const user = jwt.verify(token, JWT_SECRET);
+    const user = jwt.verify(
+      token,
+      JWT_SECRET
+    );
 
-    socket.userId = user.id;
+    ws.userId = Number(user.id);
 
-    if (!connections.has(user.id)) {
-      connections.set(user.id, new Set());
+    if (!sockets.has(ws.userId)) {
+      sockets.set(ws.userId, new Set());
     }
 
-    connections.get(user.id).add(socket);
+    sockets.get(ws.userId).add(ws);
 
-    socket.send(
+    ws.send(
       JSON.stringify({
-        event: "connected"
+        event: "connected",
       })
     );
 
-    socket.on("close", () => {
-      const set = connections.get(user.id);
+    ws.on("close", () => {
+      const userSockets = sockets.get(ws.userId);
 
-      if (!set) return;
+      if (!userSockets) return;
 
-      set.delete(socket);
+      userSockets.delete(ws);
 
-      if (set.size === 0) {
-        connections.delete(user.id);
+      if (userSockets.size === 0) {
+        sockets.delete(ws.userId);
       }
     });
-  } catch {
-    socket.close();
+  } catch (error) {
+    ws.close(1008, "Invalid token");
   }
 });
 
 async function broadcastToChat(chatId, payload) {
   try {
-    const result = await pool.query(
+    const members = await pool.query(
       `
       SELECT user_id
       FROM chat_members
@@ -669,34 +927,46 @@ async function broadcastToChat(chatId, payload) {
       [chatId]
     );
 
-    for (const row of result.rows) {
-      const sockets = connections.get(row.user_id);
+    for (const member of members.rows) {
+      const userSockets = sockets.get(
+        Number(member.user_id)
+      );
 
-      if (!sockets) continue;
+      if (!userSockets) continue;
 
-      for (const socket of sockets) {
-        if (socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify(payload));
+      for (const ws of userSockets) {
+        if (ws.readyState === 1) {
+          ws.send(JSON.stringify(payload));
         }
       }
     }
   } catch (error) {
-    console.error("Broadcast error:", error);
+    console.error(
+      "WEBSOCKET BROADCAST ERROR:",
+      error
+    );
   }
 }
 
-/*
-================================
-START SERVER
-================================
-*/
+// =========================
+// 404 API
+// =========================
 
-server.listen(
-  PORT,
-  "0.0.0.0",
-  () => {
-    console.log(
-      `PrēDa server started on port ${PORT}`
-    );
-  }
-);
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    error: "API endpoint not found",
+  });
+});
+
+// =========================
+// START
+// =========================
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(
+    `PrēDa server started on port ${PORT}`
+  );
+  console.log(
+    `Frontend directory: ${publicPath}`
+  );
+});
