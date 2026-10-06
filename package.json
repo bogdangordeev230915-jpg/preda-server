@@ -1,0 +1,23 @@
+{
+  "name": "preda-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PrēDa Messenger Server",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
+    "ws": "^8.18.3"
+  }
+}
