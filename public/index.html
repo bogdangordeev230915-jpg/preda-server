@@ -2,1398 +2,357 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>PrēDa</title>
-
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    :root {
-      --brown: #6f432d;
-      --brown-dark: #4a291b;
-      --brown-light: #9b6849;
-      --cream: #f8f2ec;
-      --white: #ffffff;
-      --text: #241812;
-      --muted: #8b7b70;
-      --line: #eadfd6;
-      --green: #5d8a62;
-    }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--cream);
-      color: var(--text);
-    }
-
-    button, input, textarea {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    #app {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      overflow: hidden;
-    }
-
-    /* AUTH */
-
-    .auth {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      background:
-        radial-gradient(circle at top right, #c79b7d 0%, transparent 35%),
-        linear-gradient(135deg, #4a291b, #8a573b);
-    }
-
-    .auth-card {
-      width: min(420px, 100%);
-      background: rgba(255,255,255,.97);
-      border-radius: 28px;
-      padding: 30px 24px;
-      box-shadow: 0 20px 70px rgba(0,0,0,.25);
-    }
-
-    .logo {
-      width: 70px;
-      height: 70px;
-      margin: 0 auto 16px;
-      border-radius: 22px;
-      background: var(--brown);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 28px;
-      font-weight: 800;
-    }
-
-    .auth-title {
-      text-align: center;
-      font-size: 30px;
-      font-weight: 800;
-      margin-bottom: 5px;
-    }
-
-    .auth-subtitle {
-      text-align: center;
-      color: var(--muted);
-      margin-bottom: 25px;
-    }
-
-    .field {
-      margin-bottom: 13px;
-    }
-
-    .field label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .field input,
-    .field textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      background: #fff;
-      border-radius: 14px;
-      padding: 13px 14px;
-      outline: none;
-    }
-
-    .field textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-
-    .field input:focus,
-    .field textarea:focus {
-      border-color: var(--brown);
-      box-shadow: 0 0 0 3px rgba(111,67,45,.1);
-    }
-
-    .primary {
-      width: 100%;
-      border: 0;
-      border-radius: 14px;
-      padding: 14px;
-      background: var(--brown);
-      color: white;
-      font-weight: 800;
-      margin-top: 5px;
-    }
-
-    .primary:active {
-      transform: scale(.98);
-    }
-
-    .auth-switch {
-      text-align: center;
-      margin-top: 18px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .auth-switch span {
-      color: var(--brown);
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .error {
-      color: #a32121;
-      background: #fff0f0;
-      border-radius: 12px;
-      padding: 10px;
-      font-size: 13px;
-      margin-bottom: 12px;
-      display: none;
-    }
-
-    /* MAIN */
-
-    .app-shell {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      background: var(--white);
-    }
-
-    .sidebar {
-      width: 380px;
-      max-width: 38%;
-      height: 100%;
-      border-right: 1px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      background: #fff;
-    }
-
-    .sidebar-header {
-      background: var(--brown);
-      color: white;
-      padding: 18px 16px 14px;
-    }
-
-    .top-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .brand {
-      font-size: 25px;
-      font-weight: 900;
-      letter-spacing: -.5px;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      width: 40px;
-      height: 40px;
-      border: 0;
-      border-radius: 50%;
-      background: rgba(255,255,255,.13);
-      color: white;
-      font-size: 20px;
-    }
-
-    .search {
-      margin-top: 14px;
-      background: rgba(255,255,255,.15);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-    }
-
-    .search span {
-      font-size: 19px;
-    }
-
-    .search input {
-      width: 100%;
-      border: 0;
-      outline: 0;
-      background: transparent;
-      color: white;
-      padding: 12px 10px;
-    }
-
-    .search input::placeholder {
-      color: rgba(255,255,255,.75);
-    }
-
-    .tabs {
-      display: flex;
-      padding: 9px;
-      gap: 6px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .tab {
-      flex: 1;
-      border: 0;
-      background: transparent;
-      color: var(--muted);
-      padding: 10px 4px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .tab.active {
-      background: #f1e8e1;
-      color: var(--brown);
-    }
-
-    .list {
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 13px 15px;
-      border-bottom: 1px solid #f2eae4;
-      cursor: pointer;
-    }
-
-    .item:hover {
-      background: #faf6f2;
-    }
-
-    .avatar {
-      flex-shrink: 0;
-      width: 51px;
-      height: 51px;
-      border-radius: 50%;
-      background: var(--brown);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-weight: 800;
-      font-size: 18px;
-    }
-
-    .item-info {
-      min-width: 0;
-      flex: 1;
-    }
-
-    .item-name {
-      font-weight: 800;
-      margin-bottom: 5px;
-    }
-
-    .item-preview {
-      color: var(--muted);
-      font-size: 13px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .empty {
-      padding: 40px 20px;
-      text-align: center;
-      color: var(--muted);
-    }
-
-    /* CHAT */
-
-    .chat {
-      flex: 1;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      background:
-        radial-gradient(circle at 20% 20%, rgba(111,67,45,.035), transparent 20%),
-        #f8f2ec;
-    }
-
-    .chat-header {
-      height: 74px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 18px;
-      background: white;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .back-btn {
-      display: none;
-      border: 0;
-      background: transparent;
-      font-size: 25px;
-    }
-
-    .chat-title {
-      font-weight: 800;
-    }
-
-    .chat-status {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 3px;
-    }
-
-    .messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .welcome {
-      margin: auto;
-      text-align: center;
-      max-width: 350px;
-      color: var(--muted);
-    }
-
-    .welcome-logo {
-      width: 90px;
-      height: 90px;
-      border-radius: 28px;
-      background: var(--brown);
-      color: white;
-      margin: 0 auto 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 35px;
-      font-weight: 900;
-    }
-
-    .message {
-      max-width: min(70%, 520px);
-      padding: 10px 13px;
-      border-radius: 16px;
-      background: white;
-      box-shadow: 0 1px 2px rgba(0,0,0,.05);
-      align-self: flex-start;
-    }
-
-    .message.mine {
-      background: #e4cbb9;
-      align-self: flex-end;
-    }
-
-    .message-time {
-      font-size: 10px;
-      color: var(--muted);
-      text-align: right;
-      margin-top: 4px;
-    }
-
-    .composer {
-      padding: 12px;
-      display: flex;
-      gap: 8px;
-      background: white;
-      border-top: 1px solid var(--line);
-    }
-
-    .attach {
-      width: 45px;
-      border: 0;
-      border-radius: 14px;
-      background: #f1e8e1;
-      color: var(--brown);
-      font-size: 20px;
-    }
-
-    .composer input {
-      flex: 1;
-      min-width: 0;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 12px;
-      outline: 0;
-    }
-
-    .send {
-      width: 48px;
-      border: 0;
-      border-radius: 14px;
-      background: var(--brown);
-      color: white;
-      font-size: 20px;
-    }
-
-    /* MOBILE */
-
-    @media (max-width: 700px) {
-      .sidebar {
-        width: 100%;
-        max-width: 100%;
-        border: 0;
-      }
-
-      .chat {
-        display: none;
-      }
-
-      .app-shell.chat-open .sidebar {
-        display: none;
-      }
-
-      .app-shell.chat-open .chat {
-        display: flex;
-      }
-
-      .back-btn {
-        display: block;
-      }
-
-      .message {
-        max-width: 82%;
-      }
+    *{box-sizing:border-box}
+    :root{--brown:#74452f;--brown2:#8a563c;--cream:#f7f1eb;--line:#e5ddd6;--text:#211b18;--muted:#8b7d74;--green:#25a35a}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#5d3828,#9a674c);color:var(--text);min-height:100vh}
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    .screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 16px}
+    .card{width:min(520px,100%);background:#fffdfb;border-radius:34px;padding:34px 28px;box-shadow:0 20px 70px #0005}
+    .logo{width:108px;height:108px;margin:0 auto 24px;border-radius:30px;background:var(--brown);color:white;display:grid;place-items:center;font-size:58px;font-weight:800}
+    h1{text-align:center;font-size:46px;margin:0 0 6px;letter-spacing:-2px}
+    .subtitle{text-align:center;color:var(--muted);font-size:20px;margin-bottom:28px}
+    label{display:block;font-weight:700;font-size:18px;margin:16px 0 8px}
+    input,textarea{width:100%;border:2px solid var(--line);border-radius:18px;padding:16px;background:white;outline:none}
+    input:focus,textarea:focus{border-color:var(--brown2);box-shadow:0 0 0 4px #8a563c18}
+    textarea{min-height:110px;resize:vertical}
+    .primary{width:100%;border:0;border-radius:18px;padding:17px;background:var(--brown);color:white;font-size:19px;font-weight:800;margin-top:22px}
+    .secondary{width:100%;border:0;background:transparent;color:var(--brown);font-weight:800;padding:18px}
+    .error,.ok{padding:14px 16px;border-radius:16px;margin:14px 0;font-weight:700}
+    .error{background:#fff0ef;color:#a52c27}.ok{background:#eaf8ef;color:#187a40}
+    .hidden{display:none!important}
+    .app{height:100vh;display:flex;background:#f6f0ea}
+    .sidebar{width:360px;background:#fff;border-right:1px solid var(--line);display:flex;flex-direction:column}
+    .top{padding:18px;background:var(--brown);color:white}
+    .brand{font-size:30px;font-weight:900;margin-bottom:15px}
+    .search{display:flex;gap:8px}
+    .search input{padding:12px;border:0;border-radius:14px}
+    .search button{border:0;border-radius:14px;background:#fff;color:var(--brown);padding:0 15px;font-weight:800}
+    .tabs{display:flex;border-bottom:1px solid var(--line)}
+    .tab{flex:1;border:0;background:white;padding:15px 5px;font-weight:800;color:var(--muted)}
+    .tab.active{color:var(--brown);border-bottom:3px solid var(--brown)}
+    .list{overflow:auto;flex:1}
+    .item{padding:16px;border-bottom:1px solid #eee;display:flex;gap:12px;align-items:center;cursor:pointer}
+    .item:hover{background:#faf7f4}
+    .avatar{width:48px;height:48px;border-radius:50%;background:var(--brown);color:white;display:grid;place-items:center;font-weight:800;flex:none;overflow:hidden}
+    .avatar img{width:100%;height:100%;object-fit:cover}
+    .item strong{display:block}.item small{color:var(--muted)}
+    .chat{flex:1;display:flex;flex-direction:column;min-width:0}
+    .chatHead{padding:16px 20px;background:white;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+    .messages{flex:1;overflow:auto;padding:24px;background:linear-gradient(#f8f2ec,#eee4da)}
+    .bubble{max-width:min(75%,600px);padding:11px 14px;margin:8px 0;border-radius:18px;background:white;box-shadow:0 2px 7px #0000000d}
+    .bubble.mine{margin-left:auto;background:#dff3e5}
+    .composer{display:flex;gap:8px;padding:12px;background:white;border-top:1px solid var(--line)}
+    .composer input{flex:1}
+    .composer button{border:0;border-radius:15px;padding:0 17px;background:var(--brown);color:white;font-weight:800}
+    .empty{height:100%;display:grid;place-items:center;text-align:center;color:var(--muted);padding:30px}
+    .modal{position:fixed;inset:0;background:#0008;display:grid;place-items:center;padding:18px;z-index:20}
+    .modalBox{width:min(500px,100%);background:white;border-radius:25px;padding:25px}
+    .row{display:flex;gap:10px}
+    .row>*{flex:1}
+    .close{float:right;border:0;background:#eee;border-radius:50%;width:36px;height:36px}
+    @media(max-width:760px){
+      .sidebar{width:100%}.chat{display:none}
+      .app.chat-open .sidebar{display:none}.app.chat-open .chat{display:flex}
+      .screen{padding:12px}.card{border-radius:25px;padding:28px 20px}
+      h1{font-size:40px}
     }
   </style>
 </head>
-
 <body>
 
-<div id="app"></div>
+<div id="auth" class="screen">
+  <div class="card">
+    <div class="logo">P</div>
+    <h1>PrēDa</h1>
+    <div id="authSubtitle" class="subtitle">Создайте свой аккаунт</div>
+    <div id="authError" class="error hidden"></div>
+
+    <div id="registerFields">
+      <label>Имя</label>
+      <input id="name" placeholder="Ваше имя" maxlength="100">
+
+      <label>О себе</label>
+      <textarea id="bio" placeholder="Расскажите о себе"></textarea>
+    </div>
+
+    <label>Код PrēDa</label>
+    <input id="loginCode" placeholder="PD-XXXXXXXXXX">
+
+    <label>Пароль</label>
+    <input id="password" type="password" placeholder="Пароль">
+
+    <button id="authButton" class="primary">Создать аккаунт</button>
+    <button id="switchAuth" class="secondary">Уже есть аккаунт? Войти</button>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="top">
+      <div class="brand">PrēDa</div>
+      <div class="search">
+        <input id="userSearch" placeholder="Найти по PD-коду">
+        <button onclick="findUser()">Найти</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="contacts">Контакты</button>
+      <button class="tab" data-tab="groups">Группы</button>
+      <button class="tab" data-tab="channels">Каналы</button>
+    </div>
+    <div id="list" class="list"></div>
+  </aside>
+
+  <main class="chat">
+    <div id="chatHead" class="chatHead">
+      <div class="empty">Выберите контакт, чтобы начать общение</div>
+    </div>
+    <div id="messages" class="messages">
+      <div class="empty">PrēDa — ваш мессенджер</div>
+    </div>
+    <form id="composer" class="composer hidden">
+      <input id="messageInput" placeholder="Введите сообщение..." autocomplete="off">
+      <button>Отправить</button>
+    </form>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modalBox">
+    <button class="close" onclick="closeModal()">×</button>
+    <h2 id="modalTitle">Пользователь</h2>
+    <div id="modalBody"></div>
+  </div>
+</div>
 
 <script>
-  /*
-    ==========================================
-    PrēDa
-    Frontend
-    ==========================================
+const API = location.origin;
+let token = localStorage.getItem('preda_token');
+let me = null;
+let currentChat = null;
+let currentUser = null;
+let ws = null;
+let registerMode = true;
 
-    ВАЖНО:
-    Пока оставляем этот адрес.
-    После окончательной настройки сервера
-    заменим его на настоящий Render URL.
-  */
+const $ = id => document.getElementById(id);
 
-  const API_URL = window.location.origin;
+function showError(message){
+  $('authError').textContent = message;
+  $('authError').classList.remove('hidden');
+}
+function clearError(){ $('authError').classList.add('hidden'); }
 
-  let token = localStorage.getItem("preda_token");
-  let currentUser = null;
-  let currentChat = null;
-  let contacts = [];
+async function api(path, options={}){
+  const headers = {'Content-Type':'application/json', ...(options.headers||{})};
+  if(token) headers.Authorization = 'Bearer ' + token;
+  const res = await fetch(API + path, {...options, headers});
+  let data = {};
+  try { data = await res.json(); } catch {}
+  if(!res.ok) throw new Error(data.error || data.message || 'Ошибка сервера');
+  return data;
+}
 
-  const app = document.getElementById("app");
+$('switchAuth').onclick = () => {
+  registerMode = !registerMode;
+  $('registerFields').classList.toggle('hidden', !registerMode);
+  $('loginCode').classList.toggle('hidden', registerMode);
+  $('authSubtitle').textContent = registerMode ? 'Создайте свой аккаунт' : 'Войдите в PrēDa';
+  $('authButton').textContent = registerMode ? 'Создать аккаунт' : 'Войти';
+  $('switchAuth').textContent = registerMode ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать';
+  clearError();
+};
 
-  function esc(text) {
-    return String(text || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function initials(name) {
-    if (!name) return "?";
-    return name.trim().slice(0, 2).toUpperCase();
-  }
-
-  function showError(text) {
-    const el = document.getElementById("error");
-    if (!el) return;
-    el.textContent = text;
-    el.style.display = "block";
-  }
-
-  function hideError() {
-    const el = document.getElementById("error");
-    if (el) el.style.display = "none";
-  }
-
-  function renderAuth(login = false) {
-    app.innerHTML = `
-      <div class="auth">
-        <div class="auth-card">
-
-          <div class="logo">P</div>
-
-          <div class="auth-title">PrēDa</div>
-          <div class="auth-subtitle">
-            ${login ? "Войдите в свой аккаунт" : "Создайте свой аккаунт"}
-          </div>
-
-          <div id="error" class="error"></div>
-
-          ${
-            login
-            ? `
-              <div class="field">
-                <label>Публичный код</label>
-                <input id="loginCode"
-                       placeholder="PD-XXXXXXXXXX"
-                       autocomplete="username">
-              </div>
-
-              <div class="field">
-                <label>Пароль</label>
-                <input id="loginPassword"
-                       type="password"
-                       placeholder="Ваш пароль">
-              </div>
-
-              <button class="primary" onclick="loginUser()">
-                Войти
-              </button>
-
-              <div class="auth-switch">
-                Нет аккаунта?
-                <span onclick="renderAuth(false)">Зарегистрироваться</span>
-              </div>
-            `
-            :
-            `
-              <div class="field">
-                <label>Имя</label>
-                <input id="regName"
-                       placeholder="Как вас зовут?">
-              </div>
-
-              <div class="field">
-                <label>О себе</label>
-                <textarea id="regBio"
-                          placeholder="Расскажите немного о себе"></textarea>
-              </div>
-
-              <div class="field">
-                <label>Пароль</label>
-                <input id="regPassword"
-                       type="password"
-                       placeholder="Придумайте пароль">
-              </div>
-
-              <button class="primary" onclick="registerUser()">
-                Создать аккаунт
-              </button>
-
-              <div class="auth-switch">
-                Уже есть аккаунт?
-                <span onclick="renderAuth(true)">Войти</span>
-              </div>
-            `
-          }
-
-        </div>
-      </div>
-    `;
-  }
-
-  async function registerUser() {
-    hideError();
-
-    const name = document.getElementById("regName").value.trim();
-    const bio = document.getElementById("regBio").value.trim();
-    const password = document.getElementById("regPassword").value;
-
-    if (!name) {
-      showError("Введите имя");
-      return;
-    }
-
-    if (password.length < 6) {
-      showError("Пароль должен быть минимум 6 символов");
-      return;
-    }
-
-    try {
-      const response = await fetch(API_URL + "/api/auth/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name,
-          bio,
-          password
-        })
+$('authButton').onclick = async () => {
+  clearError();
+  try{
+    if(registerMode){
+      const name = $('name').value.trim();
+      const bio = $('bio').value.trim();
+      const password = $('password').value;
+      if(!name || password.length < 6) throw new Error('Введите имя и пароль минимум из 6 символов');
+      const data = await api('/api/auth/register',{
+        method:'POST',
+        body:JSON.stringify({name,bio,password})
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Ошибка регистрации");
-      }
-
       token = data.token;
-      localStorage.setItem("preda_token", token);
-
-      currentUser = data.user;
-
-      renderMessenger();
-
-    } catch (error) {
-      showError(error.message);
-    }
-  }
-
-  async function loginUser() {
-    hideError();
-
-    const code = document.getElementById("loginCode").value.trim();
-    const password = document.getElementById("loginPassword").value;
-
-    if (!code || !password) {
-      showError("Введите код и пароль");
-      return;
-    }
-
-    try {
-      const response = await fetch(API_URL + "/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          code,
-          password
-        })
+      localStorage.setItem('preda_token',token);
+    }else{
+      const publicCode = $('loginCode').value.trim().toUpperCase();
+      const password = $('password').value;
+      const data = await api('/api/auth/login',{
+        method:'POST',
+        body:JSON.stringify({publicCode,password})
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Ошибка входа");
-      }
-
       token = data.token;
-      localStorage.setItem("preda_token", token);
-
-      currentUser = data.user;
-
-      renderMessenger();
-
-    } catch (error) {
-      showError(error.message);
+      localStorage.setItem('preda_token',token);
     }
-  }
+    await startApp();
+  }catch(e){ showError(e.message); }
+};
 
-  async function loadMe() {
-    if (!token) {
-      renderAuth();
-      return;
-    }
-
-    try {
-      const response = await fetch(API_URL + "/api/me", {
-        headers: {
-          Authorization: "Bearer " + token
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error();
-      }
-
-      currentUser = await response.json();
-
-      renderMessenger();
-
-    } catch {
-      localStorage.removeItem("preda_token");
-      token = null;
-      renderAuth();
-    }
-  }
-
-  function renderMessenger() {
-
-    app.innerHTML = `
-      <div class="app-shell" id="shell">
-
-        <aside class="sidebar">
-
-          <div class="sidebar-header">
-
-            <div class="top-row">
-
-              <div class="brand">
-                PrēDa
-              </div>
-
-              <div class="header-actions">
-                <button class="icon-btn"
-                        onclick="openProfile()">
-                  👤
-                </button>
-
-                <button class="icon-btn"
-                        onclick="openMenu()">
-                  ⋮
-                </button>
-              </div>
-
-            </div>
-
-            <div class="search">
-
-              <span>🔎</span>
-
-              <input
-                id="searchInput"
-                placeholder="Поиск по коду..."
-                onkeydown="searchKey(event)"
-              >
-
-            </div>
-
-          </div>
-
-          <div class="tabs">
-
-            <button class="tab active"
-                    onclick="switchTab(this,'contacts')">
-              Контакты
-            </button>
-
-            <button class="tab"
-                    onclick="switchTab(this,'groups')">
-              Группы
-            </button>
-
-            <button class="tab"
-                    onclick="switchTab(this,'channels')">
-              Каналы
-            </button>
-
-          </div>
-
-          <div id="list" class="list"></div>
-
-        </aside>
-
-
-        <main class="chat">
-
-          <header class="chat-header">
-
-            <button class="back-btn"
-                    onclick="closeChat()">
-              ←
-            </button>
-
-            <div id="chatAvatar"
-                 class="avatar">
-              P
-            </div>
-
-            <div>
-
-              <div id="chatTitle"
-                   class="chat-title">
-                PrēDa
-              </div>
-
-              <div id="chatStatus"
-                   class="chat-status">
-                Выберите чат
-              </div>
-
-            </div>
-
-          </header>
-
-
-          <section id="messages"
-                   class="messages">
-
-            <div class="welcome">
-
-              <div class="welcome-logo">
-                P
-              </div>
-
-              <h2>Добро пожаловать в PrēDa</h2>
-
-              <p>
-                Найдите человека по публичному коду
-                и начните общение.
-              </p>
-
-            </div>
-
-          </section>
-
-
-          <div class="composer">
-
-            <button class="attach"
-                    onclick="chooseFile()">
-              ＋
-            </button>
-
-            <input
-              id="messageInput"
-              placeholder="Сообщение..."
-              onkeydown="messageKey(event)"
-            >
-
-            <button class="send"
-                    onclick="sendMessage()">
-              ➤
-            </button>
-
-          </div>
-
-        </main>
-
-      </div>
-    `;
-
+async function startApp(){
+  try{
+    me = await api('/api/me');
+    $('auth').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    connectWS();
     loadContacts();
-  }
-
-  async function loadContacts() {
-
-    const list = document.getElementById("list");
-
-    list.innerHTML = `
-      <div class="empty">
-        Загрузка...
-      </div>
-    `;
-
-    try {
-
-      const response = await fetch(API_URL + "/api/contacts", {
-        headers: {
-          Authorization: "Bearer " + token
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error();
-      }
-
-      contacts = await response.json();
-
-      renderContacts();
-
-    } catch {
-
-      /*
-        Если база ещё не настроена,
-        показываем пустой список.
-      */
-
-      contacts = [];
-
-      renderContacts();
-
-    }
-  }
-
-  function renderContacts() {
-
-    const list = document.getElementById("list");
-
-    if (!contacts.length) {
-
-      list.innerHTML = `
-        <div class="empty">
-
-          <div style="font-size:42px">
-            👥
-          </div>
-
-          <h3>Контактов пока нет</h3>
-
-          <p>
-            Используйте 🔎 сверху,
-            чтобы найти человека
-            по его публичному коду.
-          </p>
-
-        </div>
-      `;
-
-      return;
-    }
-
-    list.innerHTML = contacts.map(user => `
-
-      <div class="item"
-           onclick="openUser(${user.id})">
-
-        <div class="avatar">
-          ${initials(user.name)}
-        </div>
-
-        <div class="item-info">
-
-          <div class="item-name">
-            ${esc(user.name)}
-          </div>
-
-          <div class="item-preview">
-            ${esc(user.bio || "PrēDa")}
-          </div>
-
-        </div>
-
-      </div>
-
-    `).join("");
-  }
-
-  function switchTab(button, type) {
-
-    document.querySelectorAll(".tab")
-      .forEach(x => x.classList.remove("active"));
-
-    button.classList.add("active");
-
-    const list = document.getElementById("list");
-
-    if (type === "groups") {
-
-      list.innerHTML = `
-        <div class="empty">
-
-          <div style="font-size:42px">👥</div>
-
-          <h3>Группы</h3>
-
-          <p>
-            Здесь будут групповые чаты PrēDa.
-          </p>
-
-          <button
-            class="primary"
-            style="max-width:250px"
-            onclick="createGroup()">
-            ＋ Создать группу
-          </button>
-
-        </div>
-      `;
-
-    } else if (type === "channels") {
-
-      list.innerHTML = `
-        <div class="empty">
-
-          <div style="font-size:42px">📢</div>
-
-          <h3>Каналы</h3>
-
-          <p>
-            Здесь будут каналы PrēDa.
-          </p>
-
-          <button
-            class="primary"
-            style="max-width:250px"
-            onclick="createChannel()">
-            ＋ Создать канал
-          </button>
-
-        </div>
-      `;
-
-    } else {
-
-      renderContacts();
-
-    }
-  }
-
-  async function searchKey(event) {
-
-    if (event.key !== "Enter") return;
-
-    const code = event.target.value.trim();
-
-    if (!code) return;
-
-    try {
-
-      const response = await fetch(
-        API_URL + "/api/users/by-code/" + encodeURIComponent(code),
-        {
-          headers: {
-            Authorization: "Bearer " + token
-          }
-        }
-      );
-
-      const user = await response.json();
-
-      if (!response.ok) {
-        alert(user.error || "Пользователь не найден");
-        return;
-      }
-
-      showUserResult(user);
-
-    } catch {
-
-      alert("Не удалось выполнить поиск");
-
-    }
-  }
-
-  function showUserResult(user) {
-
-    const list = document.getElementById("list");
-
-    list.innerHTML = `
-
-      <div class="item">
-
-        <div class="avatar">
-          ${initials(user.name)}
-        </div>
-
-        <div class="item-info">
-
-          <div class="item-name">
-            ${esc(user.name)}
-          </div>
-
-          <div class="item-preview">
-            ${esc(user.bio || "Нет информации")}
-          </div>
-
-          <div class="item-preview">
-            Код: ${esc(user.public_code)}
-          </div>
-
-        </div>
-
-        <button
-          onclick="event.stopPropagation(); addContact(${user.id})"
-          style="
-            border:0;
-            background:#6f432d;
-            color:white;
-            border-radius:10px;
-            padding:9px;
-          ">
-          Добавить
-        </button>
-
-      </div>
-    `;
-  }
-
-  async function addContact(userId) {
-
-    try {
-
-      const response = await fetch(API_URL + "/api/contacts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token
-        },
-        body: JSON.stringify({
-          userId
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.error || "Не удалось добавить");
-        return;
-      }
-
-      await loadContacts();
-
-      alert("Контакт добавлен");
-
-    } catch {
-
-      alert("Ошибка соединения");
-
-    }
-  }
-
-  async function openUser(userId) {
-
-    try {
-
-      const response = await fetch(
-        API_URL + "/api/chats/direct/" + userId,
-        {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer " + token
-          }
-        }
-      );
-
-      const chat = await response.json();
-
-      if (!response.ok) {
-        alert(chat.error || "Не удалось открыть чат");
-        return;
-      }
-
-      currentChat = chat;
-
-      document.getElementById("shell")
-        .classList.add("chat-open");
-
-      document.getElementById("chatTitle")
-        .textContent = chat.user?.name || "Чат";
-
-      document.getElementById("chatStatus")
-        .textContent = "В сети";
-
-      loadMessages(chat.id);
-
-    } catch {
-
-      alert("Ошибка соединения");
-
-    }
-  }
-
-  async function loadMessages(chatId) {
-
-    const box = document.getElementById("messages");
-
-    box.innerHTML = "";
-
-    try {
-
-      const response = await fetch(
-        API_URL + "/api/chats/" + chatId + "/messages",
-        {
-          headers: {
-            Authorization: "Bearer " + token
-          }
-        }
-      );
-
-      const messages = await response.json();
-
-      if (!Array.isArray(messages) || !messages.length) {
-
-        box.innerHTML = `
-          <div class="welcome">
-            <h3>Начните общение</h3>
-            <p>
-              Здесь появятся ваши сообщения.
-            </p>
-          </div>
-        `;
-
-        return;
-      }
-
-      messages.forEach(addMessageToScreen);
-
-    } catch {
-
-      box.innerHTML = `
-        <div class="welcome">
-          Не удалось загрузить сообщения.
-        </div>
-      `;
-    }
-  }
-
-  function addMessageToScreen(message) {
-
-    const box = document.getElementById("messages");
-
-    const mine =
-      Number(message.sender_id) === Number(currentUser.id);
-
-    const div = document.createElement("div");
-
-    div.className =
-      "message" + (mine ? " mine" : "");
-
-    div.innerHTML = `
-      <div>
-        ${esc(message.text || "")}
-      </div>
-
-      <div class="message-time">
-        ${new Date(message.created_at)
-          .toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit"
-          })}
-      </div>
-    `;
-
-    box.appendChild(div);
-
-    box.scrollTop = box.scrollHeight;
-  }
-
-  async function sendMessage() {
-
-    if (!currentChat) {
-      alert("Сначала откройте чат");
-      return;
-    }
-
-    const input =
-      document.getElementById("messageInput");
-
-    const text = input.value.trim();
-
-    if (!text) return;
-
-    input.value = "";
-
-    try {
-
-      const response = await fetch(
-        API_URL + "/api/chats/" +
-        currentChat.id +
-        "/messages",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token
-          },
-
-          body: JSON.stringify({
-            text
-          })
-        }
-      );
-
-      const message = await response.json();
-
-      if (!response.ok) {
-        alert(message.error || "Сообщение не отправлено");
-        return;
-      }
-
-      addMessageToScreen(message);
-
-    } catch {
-
-      alert("Нет соединения с сервером");
-
-    }
-  }
-
-  function messageKey(event) {
-
-    if (event.key === "Enter") {
-      event.preventDefault();
-      sendMessage();
-    }
-  }
-
-  function searchKeyDummy() {}
-
-  function closeChat() {
-
-    document.getElementById("shell")
-      .classList.remove("chat-open");
-
-    currentChat = null;
-  }
-
-  function openProfile() {
-
-    alert(
-      "Профиль\n\n" +
-      "Имя: " + (currentUser?.name || "") +
-      "\nКод: " + (currentUser?.public_code || "") +
-      "\n\n" +
-      (currentUser?.bio || "")
-    );
-  }
-
-  function openMenu() {
-
-    const choice = confirm(
-      "Выйти из PrēDa?"
-    );
-
-    if (!choice) return;
-
-    localStorage.removeItem("preda_token");
-
+  }catch(e){
     token = null;
-    currentUser = null;
-
-    renderAuth(true);
+    localStorage.removeItem('preda_token');
+    $('auth').classList.remove('hidden');
+    $('app').classList.add('hidden');
+    showError(e.message);
   }
+}
 
-  function chooseFile() {
+async function loadContacts(){
+  const list = $('list');
+  try{
+    const data = await api('/api/contacts');
+    const contacts = data.contacts || data || [];
+    if(!contacts.length){
+      list.innerHTML = '<div class="empty">Контактов пока нет.<br>Используйте поиск по PD-коду.</div>';
+      return;
+    }
+    list.innerHTML = contacts.map(c => `
+      <div class="item" onclick="openChat(${Number(c.id || c.user_id)})">
+        <div class="avatar">${avatarHTML(c)}</div>
+        <div><strong>${esc(c.name || 'Пользователь')}</strong><small>${esc(c.public_code || '')}</small></div>
+      </div>
+    `).join('');
+  }catch(e){
+    list.innerHTML = '<div class="empty">Не удалось загрузить контакты</div>';
+  }
+}
 
-    const input = document.createElement("input");
+function avatarHTML(u){
+  return u.avatar_url ? `<img src="${escAttr(u.avatar_url)}">` : esc((u.name||'P')[0].toUpperCase());
+}
 
-    input.type = "file";
+async function findUser(){
+  const code = $('userSearch').value.trim().toUpperCase();
+  if(!code) return;
+  try{
+    const u = await api('/api/users/by-code/' + encodeURIComponent(code));
+    $('modalTitle').textContent = u.name || 'Пользователь';
+    $('modalBody').innerHTML = `
+      <div class="avatar" style="width:90px;height:90px;margin:15px auto">${avatarHTML(u)}</div>
+      <p><b>Код:</b> ${esc(u.public_code)}</p>
+      <p>${esc(u.bio || 'Нет информации о себе')}</p>
+      <button class="primary" onclick="addContact(${Number(u.id)})">Добавить в контакты</button>
+      <button class="secondary" onclick="openChat(${Number(u.id)});closeModal()">Написать сообщение</button>
+    `;
+    $('modal').classList.remove('hidden');
+  }catch(e){ alert(e.message); }
+}
 
-    input.onchange = () => {
+async function addContact(id){
+  try{
+    await api('/api/contacts/' + id,{method:'POST'});
+    closeModal();
+    await loadContacts();
+    alert('Контакт добавлен');
+  }catch(e){ alert(e.message); }
+}
 
-      if (!input.files.length) return;
+async function openChat(userId){
+  try{
+    const data = await api('/api/chats/direct/' + userId,{method:'POST'});
+    currentChat = data.chatId || data.id || data.chat?.id;
+    currentUser = data.user || await api('/api/users/' + userId).catch(()=>({id:userId,name:'Контакт'}));
+    $('app').classList.add('chat-open');
+    $('chatHead').innerHTML = `
+      <button class="secondary" style="width:auto;padding:8px" onclick="closeChat()">←</button>
+      <div class="avatar">${avatarHTML(currentUser)}</div>
+      <div><strong>${esc(currentUser.name || 'Контакт')}</strong><small>${esc(currentUser.public_code || '')}</small></div>
+    `;
+    $('composer').classList.remove('hidden');
+    await loadMessages();
+  }catch(e){ alert(e.message); }
+}
 
-      alert(
-        "Файл выбран: " +
-        input.files[0].name +
-        "\nЗагрузку файлов подключим следующим этапом."
-      );
+function closeChat(){
+  $('app').classList.remove('chat-open');
+  currentChat = null;
+  $('composer').classList.add('hidden');
+}
+
+async function loadMessages(){
+  if(!currentChat) return;
+  try{
+    const data = await api('/api/chats/' + currentChat + '/messages');
+    const messages = data.messages || data || [];
+    $('messages').innerHTML = messages.map(renderMessage).join('') || '<div class="empty">Напишите первое сообщение</div>';
+    $('messages').scrollTop = $('messages').scrollHeight;
+  }catch(e){
+    $('messages').innerHTML = '<div class="empty">Не удалось загрузить сообщения</div>';
+  }
+}
+
+function renderMessage(m){
+  const mine = Number(m.sender_id) === Number(me?.id);
+  return `<div class="bubble ${mine?'mine':''}">${esc(m.text || '')}</div>`;
+}
+
+$('composer').onsubmit = async e => {
+  e.preventDefault();
+  const text = $('messageInput').value.trim();
+  if(!text || !currentChat) return;
+  $('messageInput').value = '';
+  try{
+    const m = await api('/api/chats/' + currentChat + '/messages',{
+      method:'POST',body:JSON.stringify({text,type:'text'})
+    });
+    const box = $('messages');
+    if(box.querySelector('.empty')) box.innerHTML='';
+    box.insertAdjacentHTML('beforeend',renderMessage(m.message || m));
+    box.scrollTop = box.scrollHeight;
+  }catch(e){ alert(e.message); }
+};
+
+function connectWS(){
+  if(!token) return;
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  try{
+    ws = new WebSocket(proto + '//' + location.host + '/ws?token=' + encodeURIComponent(token));
+    ws.onmessage = e => {
+      try{
+        const data = JSON.parse(e.data);
+        if(data.type === 'message' && data.message?.chat_id == currentChat){
+          const box=$('messages');
+          if(box.querySelector('.empty')) box.innerHTML='';
+          box.insertAdjacentHTML('beforeend',renderMessage(data.message));
+          box.scrollTop=box.scrollHeight;
+        }
+      }catch{}
     };
+  }catch{}
+}
 
-    input.click();
-  }
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    tab.classList.add('active');
+    const type=tab.dataset.tab;
+    if(type==='contacts') loadContacts();
+    else $('list').innerHTML='<div class="empty">'+(type==='groups'?'Группы скоро будут доступны.':'Каналы скоро будут доступны.')+'</div>';
+  };
+});
 
-  function createGroup() {
+function closeModal(){ $('modal').classList.add('hidden'); }
 
-    alert(
-      "Создание групп подключим к серверу следующим этапом."
-    );
-  }
+function esc(v){
+  return String(v ?? '').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function escAttr(v){ return esc(v); }
 
-  function createChannel() {
-
-    alert(
-      "Создание каналов подключим к серверу следующим этапом."
-    );
-  }
-
-  /*
-    Запуск
-  */
-
-  loadMe();
+if(token) startApp();
+else $('loginCode').classList.add('hidden');
 </script>
-
 </body>
 </html>
